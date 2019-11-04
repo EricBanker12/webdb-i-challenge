@@ -44,6 +44,22 @@ server.post('/api/accounts', validateAccountBody, (req, res) => {
     })
 })
 
+server.put('/api/accounts/:id', validateAccountBody, (req, res) => {
+    const {name, budget} = req.body
+    const id = req.params.id
+    
+    db('accounts').where({id}).update({name, budget})
+    .then(resp => {
+        // console.log(resp)
+        if (resp) res.sendStatus(204)
+        else res.status(404).json({message: `No account of id ${req.params.id} was found.`})
+    })
+    .catch(err => {
+        console.error(err)
+        res.sendStatus(500)
+    })
+})
+
 function validateAccountBody(req, res, next) {
     if (!req.body) return res.status(400).json({message: 'missing body data'})
     const {name, budget} = req.body
@@ -54,10 +70,10 @@ function validateAccountBody(req, res, next) {
         return res.status(400).json({message: `missing required 'budget' field or value was not a number`})
     }
 
-    db('accounts').where({name})
+    db('accounts').where({name}).first()
     .then(resp => {
         // console.log(resp)
-        if (resp.length) res.status(400).json({message: `an account with name: ${name} already exists.`})
+        if (resp && (!req.params.id || resp.id != Number(req.params.id))) res.status(400).json({message: `an account with name: ${name} already exists.`})
         else next()
     })
     .catch(err => {
@@ -65,5 +81,21 @@ function validateAccountBody(req, res, next) {
         res.sendStatus(500)
     })
 }
+
+// function validateAccountId(req, res, next) {
+//     db('accounts').where({id: req.params.id}).first()
+//     .then(resp => {
+//         // console.log(resp)
+//         if (resp) {
+//             res.locals.account = resp
+//             next()
+//         }
+//         else res.status(404).json({message: `No account of id ${req.params.id} was found.`})
+//     })
+//     .catch(err => {
+//         console.error(err)
+//         res.sendStatus(500)
+//     })
+// }
 
 module.exports = server;
