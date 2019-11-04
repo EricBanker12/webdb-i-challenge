@@ -60,6 +60,21 @@ server.put('/api/accounts/:id', validateAccountBody, (req, res) => {
     })
 })
 
+server.delete('/api/accounts/:id', (req, res) => {
+    const id = req.params.id
+    
+    db('accounts').where({id}).delete()
+    .then(resp => {
+        console.log(resp)
+        if (resp) res.sendStatus(204)
+        else res.status(404).json({message: `No account of id ${req.params.id} was found.`})
+    })
+    .catch(err => {
+        console.error(err)
+        res.sendStatus(500)
+    })
+})
+
 function validateAccountBody(req, res, next) {
     if (!req.body) return res.status(400).json({message: 'missing body data'})
     const {name, budget} = req.body
