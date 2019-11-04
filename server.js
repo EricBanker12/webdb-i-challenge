@@ -31,4 +31,39 @@ server.get('/api/accounts/:id', (req, res) => {
     })
 })
 
+server.post('/api/accounts', validateAccountBody, (req, res) => {
+    const {name, budget} = req.body
+    db('accounts').insert({name, budget})
+    .then(resp => {
+        // console.log(resp)
+        res.status(201).json({id: resp[0]})
+    })
+    .catch(err => {
+        console.error(err)
+        res.sendStatus(500)
+    })
+})
+
+function validateAccountBody(req, res, next) {
+    if (!req.body) return res.status(400).json({message: 'missing body data'})
+    const {name, budget} = req.body
+    if (!name || typeof name != 'string' || name.length > 255) {
+        return res.status(400).json({message: `missing required 'name' field or exceeded 255 character limit`})
+    }
+    if (isNaN(budget)) {
+        return res.status(400).json({message: `missing required 'budget' field or value was not a number`})
+    }
+
+    db('accounts').where({name})
+    .then(resp => {
+        // console.log(resp)
+        if (resp.length) res.status(400).json({message: `an account with name: ${name} already exists.`})
+        else next()
+    })
+    .catch(err => {
+        console.error(err)
+        res.sendStatus(500)
+    })
+}
+
 module.exports = server;
