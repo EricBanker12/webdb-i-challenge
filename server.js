@@ -7,7 +7,13 @@ const server = express();
 server.use(express.json());
 
 server.get('/api/accounts', (req, res) => {
-    db('accounts')
+    const {limit, sortby, sortdir} = req.query
+    
+    let query = db('accounts')
+    if (sortby || sortdir) query = query.orderBy(sortby||'id', sortdir)
+    if (!isNaN(limit)) query = query.limit(limit)
+    
+    query
     .then(resp => {
         // console.log(resp)
         res.json(resp)
